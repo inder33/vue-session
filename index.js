@@ -1,3 +1,16 @@
+/**
+ * @description Modified version for Vue3 support by Inder Singh (http://indersingh.com) 
+ * Usage:-
+ * import VueSession from "vue3-session"
+ * app.use(VueSession)
+ *
+ * // Also available in global config property
+ * const $session = app.config.globalProperties.$vsession
+ *
+ * // We can use inject as well for getting session variable
+ * const session = inject('$vsession');
+ */
+
 var STORAGE = null;
 var VueSession = {
     key: 'vue-session-key',
@@ -6,14 +19,16 @@ var VueSession = {
         STORAGE.setItem(VueSession.key,JSON.stringify(all));
     }
 }
+var $vsession = {};
 
-VueSession.install = function(Vue, options) {
+VueSession.install = function(app, options) {
     if(options && 'persist' in options && options.persist) STORAGE = window.localStorage;
     else STORAGE = window.sessionStorage;
-    Vue.prototype.$session = {
+
+    app.config.globalProperties.$vsession = $vsession = {
         flash: {
             parent: function(){
-                return Vue.prototype.$session;
+                return app.config.globalProperties.$vsession;
             },
             get: function(key){
                 var all = this.parent().getAll();
@@ -102,6 +117,9 @@ VueSession.install = function(Vue, options) {
             return this.get('session-id');
         }
     }
-};
 
-module.exports = VueSession;
+    // make it available for all child components
+    app.provide('$vsession', $vsession);
+
+};
+export default VueSession
