@@ -81,7 +81,7 @@ export default {
         })
           .then(userResponse => {
             $session.start()
-            $session.set('token', userInfo.csrf_token)
+            $session.set('token', userResponse.csrf_token)
             $session.set('isLoggedIn', true)
             resolve(userResponse)
           })
@@ -100,4 +100,4 @@ export default {
 }
 ```
 
-In your logged-in area, you can check whether or not a session is started and destroy it when the user wants to logout:
+In your logged-in area, you can check whether or not a session is started and destroy it when the user wants to logout.
