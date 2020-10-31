@@ -101,3 +101,26 @@ export default {
 ```
 
 In your logged-in area, you can check whether or not a session is started and destroy it when the user wants to logout.
+
+```javascript
+const $session = app.config.globalProperties.$vsession
+let $uid = $session.get('uid'); // if you ar setting uid while log in action
+
+// or another way
+// Helper for checking route auth. Will check if auth is needed,
+// redirects to login page is page is restricted.
+export const requireAuth = (to, from, next) => {
+  if ($session.exists()) {
+    if (!$session.get('uid')) {
+      $session.destroy()
+      next('/login')
+    } else {
+      next()
+    }
+  } else {
+    next('/login')
+  }
+}
+```
+
+Hope this is helpful ! I am available for any support/consultancy :-)
