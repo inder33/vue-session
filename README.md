@@ -1,12 +1,19 @@
 To install the plugin, do the following:
 
 ```javascript
+
 import VueSession from 'vue-session'
-Vue.use(VueSession)
+const app = createApp(App)
+app.use(VueSession)
+
 ```
 
-Now you can use it in your components with the `$session` property.
+Now you can inject this inside your component.
 
+```javascript
+const session = inject('$vsession');
+session.get('your_key');
+```
 ## Options
 
 VueSession can be started with some options that will change its behavior.
@@ -20,30 +27,30 @@ var options = {
     persist: true
 }
 
-Vue.use(VueSession, options)
+app.use(VueSession, options)
 ```
 
 ## Reference
 
-- `this.$session.getAll()`, returns all data stored in the Session.
-- `this.$session.set(key,value)`, sets a single value to the Session.
-- `this.$session.get(key)`, returns the value attributed to the given key.
-- `this.$session.start()`, initializes a session with a 'session-id'. If you attempt to save a value without having started a new session, the plugin will automatically start a new session.
-- `this.$session.exists()`, checks whether a session has been initialized or not.
-- `this.$session.has(key)`, checks whether the key exists in the Session
-- `this.$session.remove(key)`, removes the given key from the Session
-- `this.$session.clear()`, clear all keys in the Session, except for 'session-id', keeping the Session alive
-- `this.$session.destroy()`, destroys the Session
-- `this.$session.id()`, returns the 'session-id'
-- `this.$session.renew(session_id)`, allows a user to renew a previous session by manually inputting the session_id
+- `session.getAll()`, returns all data stored in the Session.
+- `session.set(key,value)`, sets a single value to the Session.
+- `session.get(key)`, returns the value attributed to the given key.
+- `session.start()`, initializes a session with a 'session-id'. If you attempt to save a value without having started a new session, the plugin will automatically start a new session.
+- `session.exists()`, checks whether a session has been initialized or not.
+- `session.has(key)`, checks whether the key exists in the Session
+- `session.remove(key)`, removes the given key from the Session
+- `session.clear()`, clear all keys in the Session, except for 'session-id', keeping the Session alive
+- `session.destroy()`, destroys the Session
+- `session.id()`, returns the 'session-id'
+- `session.renew(session_id)`, allows a user to renew a previous session by manually inputting the session_id
 
 ### Flash
 
 Flash allows you to save data until you read them without having to start a regular Session.
 
-- `this.$session.flash.set(key, value)`, sets a flash value
-- `this.$session.flash.get(key)`, reads and removes a flash value
-- `this.$session.flash.remove(key)`, removes a flash value
+- `session.flash.set(key, value)`, sets a flash value
+- `session.flash.get(key)`, reads and removes a flash value
+- `session.flash.remove(key)`, removes a flash value
 
 
 ## Example
@@ -51,46 +58,43 @@ Flash allows you to save data until you read them without having to start a regu
 Your login method could look like this:
 
 ```javascript
+import { inject } from "vue";
+
 export default {
-    name: 'login',
-    methods: {
-        login: function () {
-          this.$http.post('http://somehost/user/login', {
-            password: this.password,
-            email: this.email
-          }).then(function (response) {
-            if (response.status === 200 && 'token' in response.body) {
-              this.$session.start()
-              this.$session.set('jwt', response.body.token)
-              Vue.http.headers.common['Authorization'] = 'Bearer ' + response.body.token
-              this.$router.push('/panel/search')
-            }
-          }, function (err) {
-            console.log('err', err)
+  setup(props, { emit }) { //props, context
+    const $session = inject('$vsession');
+    const handleSubmit = () => {
+      // your validation code
+      // your method code
+      // your API logics...
+      
+      // sample code
+      axios.post(YOUR_API_URL + '?_format=json', JSON.stringify(YOUR_JSON), {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRF-Token': sessionToken
+          },
+          withCredentials: true
+        })
+          .then(userResponse => {
+            $session.start()
+            $session.set('token', userInfo.csrf_token)
+            $session.set('isLoggedIn', true)
+            resolve(userResponse)
           })
-        }
+          .catch(error => {
+            // handle any errors
+            if (error.response.status == 403) {
+              console.log('User already logged in! ' + $session.get('token'))
+            }
+            let message = error.response.data.message
+            reject(message)
+          })
     }
+    return {
+      handleSubmit
+    };
 }
 ```
 
 In your logged-in area, you can check whether or not a session is started and destroy it when the user wants to logout:
-
-```javascript
-export default {
-  name: 'panel',
-  data () {
-    return { }
-  },
-  beforeCreate: function () {
-    if (!this.$session.exists()) {
-      this.$router.push('/')
-    }
-  },
-  methods: {
-    logout: function () {
-      this.$session.destroy()
-      this.$router.push('/')
-    }
-  }
-}
-```
