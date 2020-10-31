@@ -82,7 +82,8 @@ export default {
           .then(userResponse => {
             $session.start()
             $session.set('token', userResponse.csrf_token)
-            $session.set('isLoggedIn', true)
+            $session.set('isLoggedIn', true);
+            $session.set('uid', userResponse.uid)
             resolve(userResponse)
           })
           .catch(error => {
@@ -111,7 +112,7 @@ let $uid = $session.get('uid'); // if you ar setting uid while log in action
 // redirects to login page is page is restricted.
 export const requireAuth = (to, from, next) => {
   if ($session.exists()) {
-    if (!$session.get('uid')) {
+    if (!$session.get('isLoggedIn')) {
       $session.destroy()
       next('/login')
     } else {
